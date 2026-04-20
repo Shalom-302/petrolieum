@@ -1,0 +1,9 @@
+# Webhooks Plugin Dependencies
+httpx>=0.24.1  # Async HTTP client
+cryptography>=44.0.2  # For webhook signature verification
+pydantic>=2.4.2  # For data validation
+jsonschema>=4.19.0  # For JSON payload validation
+backoff>=2.2.1  # For exponential backoff and retry logic
+tenacity>=8.2.3  # For retry mechanisms
+schedule>=1.2.0  # For scheduling webhook deliveries
+aiohttp>=3.8.4  # Alternative async HTTP client

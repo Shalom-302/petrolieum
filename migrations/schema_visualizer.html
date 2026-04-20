@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Schema Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #1f77b4;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #145c8c;
+        }
+
+        #schema {
+            width: 100%;
+            overflow: auto;
+        }
+
+        .mermaid {
+            font-size: 14px;
+        }
+
+        .mermaid .er.entityBox {
+            fill: #fff;
+            stroke: #333;
+        }
+
+        .mermaid .er.entityLabel {
+            fill: #333;
+        }
+
+        .mermaid .er.attributeBoxOdd {
+            fill: #f8f9fa;
+        }
+
+        .mermaid .er.attributeBoxEven {
+            fill: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <button onclick="zoomIn()">Zoom In</button>
+            <button onclick="zoomOut()">Zoom Out</button>
+            <button onclick="resetZoom()">Reset Zoom</button>
+            <button onclick="toggleTheme()">Toggle Theme</button>
+        </div>
+        <div id="schema"></div>
+    </div>
+
+    <script>
+        let currentScale = 1;
+        let isDarkTheme = false;
+        
+        // Configure mermaid
+        mermaid.initialize({
+            theme: 'default',
+            er: {
+                diagramPadding: 20,
+                layoutDirection: 'TB',
+                minEntityWidth: 100,
+                minEntityHeight: 75,
+                entityPadding: 15,
+                stroke: 'gray',
+                fill: 'white',
+                fontSize: 12
+            },
+            securityLevel: 'loose'
+        });
+
+        // Load the schema data
+        Promise.all([
+            fetch('../docs/db_schema_high_level_latest.json').then(r => r.json()),
+            fetch('../docs/db_schema_detailed_latest.json').then(r => r.json())
+        ]).then(([highLevelSchema, detailedSchema]) => {
+            createVisualization(highLevelSchema, detailedSchema);
+        }).catch(error => {
+            console.error('Error loading schema:', error);
+            document.getElementById('schema').innerHTML = 'Error loading schema data. Please check the console for details.';
+        });
+
+        function createVisualization(highLevelSchema, detailedSchema) {
+            let mermaidDefinition = 'erDiagram\n';
+            
+            // Add entities with their attributes
+            Object.entries(detailedSchema.tables).forEach(([tableName, tableInfo]) => {
+                // Escape special characters in table name
+                const safeTableName = tableName.replace(/[^a-zA-Z0-9]/g, '_');
+                mermaidDefinition += `    ${safeTableName} {\n`;
+                
+                // Add columns
+                tableInfo.columns.forEach(column => {
+                    const type = column.type.replace(/[^a-zA-Z0-9]/g, '_');
+                    const name = column.name.replace(/[^a-zA-Z0-9]/g, '_');
+                    const constraints = [];
+                    
+                    if (column.primary_key) {
+                        constraints.push('PK');
+                    }
+                    if (column.name.endsWith('_id')) {
+                        constraints.push('FK');
+                    }
+                    if (!column.nullable) {
+                        constraints.push('NOT_NULL');
+                    }
+                    
+                    const constraintStr = constraints.length > 0 ? ` "` + constraints.join(' ') + `"` : '';
+                    mermaidDefinition += `        ${type} ${name}${constraintStr}\n`;
+                });
+                
+                mermaidDefinition += `    }\n`;
+            });
+
+            // Add relationships
+            if (highLevelSchema.relationships) {
+                highLevelSchema.relationships.forEach(rel => {
+                    const sourceTable = rel.source.replace(/[^a-zA-Z0-9]/g, '_');
+                    const targetTable = rel.target.replace(/[^a-zA-Z0-9]/g, '_');
+                    mermaidDefinition += `    ${sourceTable} ||--o{ ${targetTable} : ""\n`;
+                });
+            }
+
+            // Render the diagram
+            const element = document.querySelector("#schema");
+            element.innerHTML = `<pre class="mermaid">${mermaidDefinition}</pre>`;
+            
+            // Force re-render
+            mermaid.init(undefined, ".mermaid");
+        }
+
+        function zoomIn() {
+            currentScale *= 1.2;
+            applyZoom();
+        }
+
+        function zoomOut() {
+            currentScale *= 0.8;
+            applyZoom();
+        }
+
+        function resetZoom() {
+            currentScale = 1;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            const svg = document.querySelector("#schema svg");
+            if (svg) {
+                svg.style.transform = `scale(${currentScale})`;
+                svg.style.transformOrigin = 'center';
+            }
+        }
+
+        function toggleTheme() {
+            isDarkTheme = !isDarkTheme;
+            mermaid.initialize({
+                theme: isDarkTheme ? 'dark' : 'default'
+            });
+            const highLevelSchema = window.highLevelSchema;
+            const detailedSchema = window.detailedSchema;
+            if (highLevelSchema && detailedSchema) {
+                createVisualization(highLevelSchema, detailedSchema);
+            }
+        }
+    </script>
+</body>
+</html>

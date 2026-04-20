@@ -1,0 +1,8 @@
+# Privacy Compliance Plugin Dependencies
+cryptography>=44.0.2  # For data encryption
+pycountry>=22.3.5  # For country-specific compliance rules
+email-validator>=2.0.0  # For validating email addresses
+pydantic-extra-types>=2.1.0  # For advanced data types validation
+pseudonymizer>=0.3.0  # For pseudonymizing personal data
+argon2-cffi>=23.1.0  # For secure password hashing
+gdpr-compliance>=0.1.0  # For GDPR compliance utilities

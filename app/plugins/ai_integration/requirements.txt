@@ -1,0 +1,7 @@
+# AI Integration Plugin Dependencies
+openai>=1.3.5  # OpenAI API client for GPT models integration
+tiktoken>=0.5.1  # Tokenizer for OpenAI models
+sentence-transformers>=2.2.2  # For text embeddings and semantic search
+nltk>=3.8.1  # Natural Language Toolkit for text processing
+scikit-learn>=1.2.2  # For machine learning algorithms and utilities
+tenacity>=8.2.3  # For retry mechanisms with external APIs

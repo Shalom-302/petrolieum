@@ -1,0 +1,15 @@
+#!/bin/bash
+# Script wrapper for docker-compose exec api python command /app/kaapi_cli.py
+# Usage: ./kaapi [commands and arguments]
+# Example: ./kaapi db preview
+
+# Check if docker-compose is running
+if ! docker-compose ps | grep -q 'api.*Up'; then
+  echo "⚠️ The API container does not seem to be running."
+  echo "Start it first with 'docker-compose up -d api'"
+  exit 1
+fi
+
+# Transfer all arguments to the script
+export COMPOSE_CONVERT_WINDOWS_PATHS=0
+docker-compose exec api python //app/app/commands/cli.py "$@"

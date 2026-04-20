@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: #2196F3;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .button {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome to {{ company_name }}!</h1>
+    </div>
+    
+    <div class="content">
+        <p>Hello {{ user_name }},</p>
+        
+        <p>We're excited to have you join our platform! Your account has been successfully created, but we need to verify your email address to ensure the security of your account.</p>
+        
+        <p>Here are your account details:</p>
+        <ul>
+            <li>Username: {{ username }}</li>
+            <li>Email: {{ email }}</li>
+            <li>Account Type: {{ account_type }}</li>
+        </ul>
+
+        <p style="text-align: center;">
+            <a href="{{ activation_link }}" class="button">Activate Your Account</a>
+        </p>
+
+        <p>This activation link will expire in {{ expiry_hours }} hours. If you don't activate your account within this time, you'll need to request a new activation link.</p>
+    </div>
+
+    <div class="footer">
+        <p>
+            Best regards,<br>
+            The {{ company_name }} Team
+        </p>
+        <p>
+            <small>If you didn't create an account with {{ company_name }}, please ignore this email.</small>
+        </p>
+    </div>
+</body>
+</html>

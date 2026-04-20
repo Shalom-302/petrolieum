@@ -1,0 +1,6 @@
+# Advanced Scheduler Plugin Dependencies
+apscheduler>=3.10.1  # For advanced job scheduling
+croniter>=2.0.1  # For cron expression parsing
+python-dateutil>=2.8.2  # For date manipulation
+schedule>=1.2.0  # Alternative lightweight scheduling library
+tzlocal>=5.0.1  # For timezone handling

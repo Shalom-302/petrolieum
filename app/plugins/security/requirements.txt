@@ -1,0 +1,12 @@
+# Security Plugin Dependencies
+pyjwt>=2.8.0  # For JWT token handling
+cryptography>=44.0.2  # For cryptographic operations
+pyotp>=2.8.0  # For TOTP-based two-factor authentication
+oauthlib>=3.2.2  # For OAuth implementation
+python-jose>=3.3.0  # For JWE/JWS and other security operations
+bcrypt>=4.0.1  # For password hashing
+argon2-cffi>=23.1.0  # For secure password hashing
+pycryptodome>=3.19.0  # Cryptographic library
+certifi>=2023.7.22  # For certificate validation
+pyOpenSSL>=23.3.0  # For TLS/SSL functionality
+cffi>=1.15.1  # C Foreign Function Interface for cryptography

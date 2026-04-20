@@ -1,0 +1,119 @@
+# Kaapi - Core Dependencies
+# ========================
+# The main requirements file contains essential packages
+# For plugin-specific dependencies, see requirements.txt in each plugin directory
+# You can also use the install_plugin_requirements.py script to install all plugin dependencies automatically.
+
+# Web Framework
+fastapi==0.115.11
+uvicorn
+starlette>=0.37.2
+pydantic==2.10.6
+pydantic_core
+pydantic-settings
+python-dotenv
+
+# API & Network
+httpx
+requests
+aiohttp==3.8.4
+sse-starlette
+aiofiles==24.1.0
+python-socketio[async]
+email-validator
+
+# Database
+sqlalchemy
+sqlalchemy[asyncio]==2.0.30
+alembic
+psycopg2-binary==2.9.9
+asyncpg==0.29.0
+aiosqlite==0.20.0
+
+# Data Management
+sqlalchemy
+pydantic>=2.0.0
+pydantic-settings
+pandas>=2.0.0
+scikit-learn
+# Messaging & Queue
+celery
+redis
+aio_pika
+pika==1.3.2
+
+# Security
+pyjwt
+python-jose>=3.3.0
+bcrypt==3.2.0
+passlib[bcrypt]==1.7.4
+casbin
+casbin_sqlalchemy_adapter
+cryptography==44.0.2
+pyotp==2.7.0
+qrcode[pil]==7.4.2
+fastapi-limiter==0.1.6
+hvac==2.3.0
+
+# Monitoring & Observability
+prometheus-client
+psutil==5.9.5
+
+# Task Scheduling
+apscheduler
+
+# Integration
+slack-sdk==3.27.1
+
+# Serialization & Configuration
+pyyaml==6.0.2
+dicttoxml==1.7.16
+jinja2>=3.1.2
+typer[all]
+click
+scipy
+
+matplotlib
+sqlalchemy_schemadisplay
+
+# Plugin Dependencies
+# ------------------
+# To install all plugin dependencies:
+# $ python install_plugin_requirements.py
+#
+# To install dependencies of a specific plugin:
+# $ python install_plugin_requirements.py --plugin nom_plugin
+#
+# To generate a consolidated requirements file with all plugin dependencies:
+# $ python install_plugin_requirements.py --generate
+langchain_google_genai
+streamlit
+langchain
+python-dotenv
+langchain-community
+google-generativeai
+langgraph  
+tavily-python 
+beautifulsoup4 
+requests 
+pandas 
+numpy 
+plotly
+tavily-python
+trafilatura
+watchdog
+langchain-deepseek
+playwright
+
+# Ajoutez ces dépendances pour le plugin Scraap
+beautifulsoup4>=4.12.2
+requests>=2.31.0
+trafilatura>=1.6.3
+langchain-deepseek>=0.1.0
+langgraph>=0.1.0
+python-multipart
+pywebpush
+minio
+boto3
+google-cloud-storage
+firebase-admin

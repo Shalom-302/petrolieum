@@ -1,0 +1,9 @@
+# Main dependencies
+minio>=7.1.15  # MinIO client
+boto3>=1.26.0  # AWS S3 client
+google-cloud-storage>=2.7.0  # Google Cloud Storage client
+Pillow>=9.4.0  # Image processing
+
+# Optional dependencies
+python-multipart>=0.0.5  # For file upload handling via FastAPI
+webp>=0.1.0  # Optional WebP support

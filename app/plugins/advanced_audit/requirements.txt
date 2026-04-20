@@ -1,0 +1,10 @@
+# Advanced Audit Plugin Dependencies
+python-json-logger>=2.0.7
+structlog>=23.1.0
+elasticsearch>=8.10.0  # For storing audit logs in Elasticsearch
+pydantic-settings>=2.0.3  # For configuration management
+cryptography>=44.0.2  # For encryption of sensitive audit data
+requests>=2.28.0
+
+# Load generation script dependencies
+asyncpg>=0.28.0  # Asynchronous PostgreSQL client

@@ -1,0 +1,634 @@
+{
+  "tables": [
+    "offline_sync_configs",
+    "alembic_version",
+    "alert_rules",
+    "audit_logs",
+    "business_alerts",
+    "digital_timestamps",
+    "file_storage_folders",
+    "matomo_embed_configs",
+    "matomo_settings",
+    "privacy_data_processing_records",
+    "pwa_settings",
+    "recommendation_interactions",
+    "recommendation_item_features",
+    "recommendation_item_similarities",
+    "recommendation_results",
+    "recommendation_similarity_matrices",
+    "recommendation_user_preferences",
+    "scheduled_jobs",
+    "test",
+    "user_sessions",
+    "webhooks",
+    "ai_providers",
+    "ai_models",
+    "api_versions",
+    "api_changes",
+    "api_endpoints",
+    "api_gateway_keys",
+    "api_gateway_audit_logs",
+    "api_gateway_permissions",
+    "api_gateway_rate_limits",
+    "auth_permission",
+    "auth_role_permission",
+    "auth_role",
+    "digital_signatures",
+    "digital_signature_evidence",
+    "file_storage_providers",
+    "file_storage_files",
+    "i18n_translation_groups",
+    "i18n_translations",
+    "i18n_languages",
+    "kyc_regions",
+    "kyc_user_profiles",
+    "messaging_conversations",
+    "messaging_conversation_participants",
+    "messaging_group_settings",
+    "messaging_messages",
+    "notification_segments",
+    "notification_history",
+    "offline_sync_batches",
+    "offline_sync_operations",
+    "privacy_cookie_categories",
+    "privacy_cookie_category_settings",
+    "privacy_cookie_settings",
+    "privacy_cookies",
+    "ai_content_recommendations",
+    "ai_embeddings",
+    "ai_text_analysis_results",
+    "ai_usage_records",
+    "auth_access_token",
+    "auth_mfa_method",
+    "auth_session",
+    "auth_verification_code",
+    "data_exchange_schedules",
+    "data_exchange_templates",
+    "data_exchange_validation_rules",
+    "file_storage_folder_associations",
+    "file_storage_thumbnails",
+    "i18n_translation_history",
+    "kyc_verifications",
+    "matomo_user_mappings",
+    "messaging_attachments",
+    "messaging_message_delivery_status",
+    "messaging_reactions",
+    "messaging_receipts",
+    "messaging_user_blocks",
+    "messaging_user_conversation_settings",
+    "payment_subscriptions",
+    "privacy_anonymization_logs",
+    "privacy_data_requests",
+    "privacy_policies",
+    "privacy_user_consents",
+    "push_subscriptions",
+    "auth_group",
+    "user_group",
+    "workflows",
+    "data_exchange_jobs",
+    "notification_receipts",
+    "payment_subscription_history",
+    "payment_subscription_items",
+    "payments",
+    "privacy_exported_data",
+    "subscription_segment_association",
+    "workflow_states",
+    "workflow_steps",
+    "payment_approval_steps",
+    "payment_approver",
+    "payment_refunds",
+    "payment_transactions",
+    "workflow_instances",
+    "workflow_step_roles",
+    "workflow_transitions",
+    "step_approvals",
+    "workflow_history",
+    "articles",
+    "products",
+    "purchase_taxes",
+    "storages",
+    "organizations",
+    "tanks",
+    "pumps",
+    "clients",
+    "product_price_configs",
+    "purchases",
+    "sales",
+    "stock_movements",
+    "user"
+  ],
+  "relationships": [
+    {
+      "source": "file_storage_folders",
+      "target": "file_storage_folders"
+    },
+    {
+      "source": "ai_models",
+      "target": "ai_providers"
+    },
+    {
+      "source": "api_changes",
+      "target": "api_versions"
+    },
+    {
+      "source": "api_changes",
+      "target": "api_versions"
+    },
+    {
+      "source": "api_endpoints",
+      "target": "api_versions"
+    },
+    {
+      "source": "api_gateway_audit_logs",
+      "target": "api_gateway_keys"
+    },
+    {
+      "source": "api_gateway_permissions",
+      "target": "api_gateway_keys"
+    },
+    {
+      "source": "api_gateway_rate_limits",
+      "target": "api_gateway_keys"
+    },
+    {
+      "source": "auth_role_permission",
+      "target": "auth_permission"
+    },
+    {
+      "source": "auth_role_permission",
+      "target": "auth_role"
+    },
+    {
+      "source": "digital_signature_evidence",
+      "target": "digital_signatures"
+    },
+    {
+      "source": "file_storage_files",
+      "target": "file_storage_providers"
+    },
+    {
+      "source": "i18n_translations",
+      "target": "i18n_translation_groups"
+    },
+    {
+      "source": "i18n_translations",
+      "target": "i18n_languages"
+    },
+    {
+      "source": "kyc_user_profiles",
+      "target": "kyc_regions"
+    },
+    {
+      "source": "messaging_conversation_participants",
+      "target": "messaging_conversations"
+    },
+    {
+      "source": "messaging_group_settings",
+      "target": "messaging_conversations"
+    },
+    {
+      "source": "messaging_messages",
+      "target": "messaging_conversations"
+    },
+    {
+      "source": "messaging_messages",
+      "target": "messaging_messages"
+    },
+    {
+      "source": "notification_history",
+      "target": "notification_segments"
+    },
+    {
+      "source": "offline_sync_operations",
+      "target": "offline_sync_batches"
+    },
+    {
+      "source": "privacy_cookie_category_settings",
+      "target": "privacy_cookie_categories"
+    },
+    {
+      "source": "privacy_cookie_category_settings",
+      "target": "privacy_cookie_settings"
+    },
+    {
+      "source": "privacy_cookies",
+      "target": "privacy_cookie_categories"
+    },
+    {
+      "source": "ai_content_recommendations",
+      "target": "ai_models"
+    },
+    {
+      "source": "ai_content_recommendations",
+      "target": "user"
+    },
+    {
+      "source": "ai_embeddings",
+      "target": "ai_models"
+    },
+    {
+      "source": "ai_text_analysis_results",
+      "target": "ai_models"
+    },
+    {
+      "source": "ai_usage_records",
+      "target": "ai_models"
+    },
+    {
+      "source": "ai_usage_records",
+      "target": "ai_providers"
+    },
+    {
+      "source": "ai_usage_records",
+      "target": "user"
+    },
+    {
+      "source": "auth_access_token",
+      "target": "user"
+    },
+    {
+      "source": "auth_mfa_method",
+      "target": "user"
+    },
+    {
+      "source": "auth_session",
+      "target": "user"
+    },
+    {
+      "source": "auth_verification_code",
+      "target": "user"
+    },
+    {
+      "source": "data_exchange_schedules",
+      "target": "user"
+    },
+    {
+      "source": "data_exchange_templates",
+      "target": "user"
+    },
+    {
+      "source": "data_exchange_validation_rules",
+      "target": "user"
+    },
+    {
+      "source": "file_storage_folder_associations",
+      "target": "file_storage_files"
+    },
+    {
+      "source": "file_storage_folder_associations",
+      "target": "file_storage_folders"
+    },
+    {
+      "source": "file_storage_thumbnails",
+      "target": "file_storage_files"
+    },
+    {
+      "source": "i18n_translation_history",
+      "target": "i18n_translations"
+    },
+    {
+      "source": "i18n_translation_history",
+      "target": "user"
+    },
+    {
+      "source": "kyc_verifications",
+      "target": "kyc_user_profiles"
+    },
+    {
+      "source": "kyc_verifications",
+      "target": "kyc_regions"
+    },
+    {
+      "source": "matomo_user_mappings",
+      "target": "user"
+    },
+    {
+      "source": "messaging_attachments",
+      "target": "messaging_messages"
+    },
+    {
+      "source": "messaging_message_delivery_status",
+      "target": "messaging_messages"
+    },
+    {
+      "source": "messaging_message_delivery_status",
+      "target": "user"
+    },
+    {
+      "source": "messaging_reactions",
+      "target": "messaging_messages"
+    },
+    {
+      "source": "messaging_reactions",
+      "target": "user"
+    },
+    {
+      "source": "messaging_receipts",
+      "target": "messaging_messages"
+    },
+    {
+      "source": "messaging_receipts",
+      "target": "user"
+    },
+    {
+      "source": "messaging_user_blocks",
+      "target": "user"
+    },
+    {
+      "source": "messaging_user_blocks",
+      "target": "user"
+    },
+    {
+      "source": "messaging_user_conversation_settings",
+      "target": "messaging_conversations"
+    },
+    {
+      "source": "messaging_user_conversation_settings",
+      "target": "user"
+    },
+    {
+      "source": "payment_subscriptions",
+      "target": "user"
+    },
+    {
+      "source": "payment_subscriptions",
+      "target": "user"
+    },
+    {
+      "source": "privacy_anonymization_logs",
+      "target": "user"
+    },
+    {
+      "source": "privacy_data_requests",
+      "target": "user"
+    },
+    {
+      "source": "privacy_policies",
+      "target": "user"
+    },
+    {
+      "source": "privacy_user_consents",
+      "target": "user"
+    },
+    {
+      "source": "push_subscriptions",
+      "target": "user"
+    },
+    {
+      "source": "user_group",
+      "target": "auth_group"
+    },
+    {
+      "source": "user_group",
+      "target": "user"
+    },
+    {
+      "source": "workflows",
+      "target": "user"
+    },
+    {
+      "source": "workflows",
+      "target": "user"
+    },
+    {
+      "source": "data_exchange_jobs",
+      "target": "data_exchange_schedules"
+    },
+    {
+      "source": "data_exchange_jobs",
+      "target": "data_exchange_templates"
+    },
+    {
+      "source": "data_exchange_jobs",
+      "target": "user"
+    },
+    {
+      "source": "notification_receipts",
+      "target": "notification_history"
+    },
+    {
+      "source": "notification_receipts",
+      "target": "push_subscriptions"
+    },
+    {
+      "source": "payment_subscription_history",
+      "target": "payment_subscriptions"
+    },
+    {
+      "source": "payment_subscription_history",
+      "target": "user"
+    },
+    {
+      "source": "payment_subscription_items",
+      "target": "payment_subscriptions"
+    },
+    {
+      "source": "payments",
+      "target": "user"
+    },
+    {
+      "source": "payments",
+      "target": "user"
+    },
+    {
+      "source": "payments",
+      "target": "payment_subscriptions"
+    },
+    {
+      "source": "privacy_exported_data",
+      "target": "privacy_data_requests"
+    },
+    {
+      "source": "subscription_segment_association",
+      "target": "notification_segments"
+    },
+    {
+      "source": "subscription_segment_association",
+      "target": "push_subscriptions"
+    },
+    {
+      "source": "workflow_states",
+      "target": "workflows"
+    },
+    {
+      "source": "workflow_steps",
+      "target": "workflow_steps"
+    },
+    {
+      "source": "workflow_steps",
+      "target": "workflow_steps"
+    },
+    {
+      "source": "workflow_steps",
+      "target": "workflows"
+    },
+    {
+      "source": "payment_approval_steps",
+      "target": "user"
+    },
+    {
+      "source": "payment_approval_steps",
+      "target": "payments"
+    },
+    {
+      "source": "payment_approver",
+      "target": "payments"
+    },
+    {
+      "source": "payment_approver",
+      "target": "user"
+    },
+    {
+      "source": "payment_refunds",
+      "target": "payments"
+    },
+    {
+      "source": "payment_refunds",
+      "target": "user"
+    },
+    {
+      "source": "payment_transactions",
+      "target": "payments"
+    },
+    {
+      "source": "workflow_instances",
+      "target": "workflow_states"
+    },
+    {
+      "source": "workflow_instances",
+      "target": "workflows"
+    },
+    {
+      "source": "workflow_step_roles",
+      "target": "auth_role"
+    },
+    {
+      "source": "workflow_step_roles",
+      "target": "workflow_steps"
+    },
+    {
+      "source": "workflow_transitions",
+      "target": "workflow_states"
+    },
+    {
+      "source": "workflow_transitions",
+      "target": "workflow_states"
+    },
+    {
+      "source": "workflow_transitions",
+      "target": "workflows"
+    },
+    {
+      "source": "step_approvals",
+      "target": "workflow_instances"
+    },
+    {
+      "source": "step_approvals",
+      "target": "workflow_steps"
+    },
+    {
+      "source": "step_approvals",
+      "target": "user"
+    },
+    {
+      "source": "workflow_history",
+      "target": "workflow_states"
+    },
+    {
+      "source": "workflow_history",
+      "target": "workflow_instances"
+    },
+    {
+      "source": "workflow_history",
+      "target": "workflow_steps"
+    },
+    {
+      "source": "workflow_history",
+      "target": "workflow_states"
+    },
+    {
+      "source": "workflow_history",
+      "target": "user"
+    },
+    {
+      "source": "purchase_taxes",
+      "target": "purchases"
+    },
+    {
+      "source": "storages",
+      "target": "purchases"
+    },
+    {
+      "source": "tanks",
+      "target": "organizations"
+    },
+    {
+      "source": "tanks",
+      "target": "products"
+    },
+    {
+      "source": "pumps",
+      "target": "tanks"
+    },
+    {
+      "source": "clients",
+      "target": "organizations"
+    },
+    {
+      "source": "product_price_configs",
+      "target": "organizations"
+    },
+    {
+      "source": "product_price_configs",
+      "target": "products"
+    },
+    {
+      "source": "purchases",
+      "target": "organizations"
+    },
+    {
+      "source": "purchases",
+      "target": "products"
+    },
+    {
+      "source": "purchases",
+      "target": "tanks"
+    },
+    {
+      "source": "sales",
+      "target": "clients"
+    },
+    {
+      "source": "sales",
+      "target": "organizations"
+    },
+    {
+      "source": "sales",
+      "target": "products"
+    },
+    {
+      "source": "sales",
+      "target": "pumps"
+    },
+    {
+      "source": "stock_movements",
+      "target": "organizations"
+    },
+    {
+      "source": "stock_movements",
+      "target": "products"
+    },
+    {
+      "source": "stock_movements",
+      "target": "tanks"
+    },
+    {
+      "source": "user",
+      "target": "organizations"
+    },
+    {
+      "source": "user",
+      "target": "auth_role"
+    }
+  ]
+}

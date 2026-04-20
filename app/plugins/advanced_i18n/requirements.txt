@@ -1,0 +1,5 @@
+# Advanced Internationalization Plugin Dependencies
+pycountry>=22.3.5  # For country names and codes handling
+langcodes>=3.3.0  # For language codes and names processing
+babel>=2.12.1  # For internationalization utilities
+polib>=1.2.0  # For import/export of PO/POT files

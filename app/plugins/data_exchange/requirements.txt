@@ -1,0 +1,10 @@
+# Data Exchange Plugin Dependencies
+pandas>=2.0.3  # For data manipulation and analysis
+pyarrow>=14.0.1  # For efficient data serialization
+openpyxl>=3.1.2  # For Excel file support
+xlrd>=2.0.1  # For legacy Excel file support
+pyyaml>=6.0.1  # For YAML parsing and generation
+tablib>=3.5.0  # For tabular dataset manipulation
+marshmallow>=3.19.0  # For object serialization/deserialization
+python-dateutil>=2.8.2  # For date handling
+dicttoxml>=3.1.0  # For XML conversion

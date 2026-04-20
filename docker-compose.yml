@@ -1,0 +1,151 @@
+# docker-compose.yml (Version finale, complète et anti-build parallèle)
+
+services:
+  api:
+    # SEUL CE SERVICE A LE DROIT DE CONSTRUIRE L'IMAGE
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kaapi-app:latest # Il construit et nomme l'image
+    container_name: kaapi-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@kaapi-db:5432/kaapi
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+      - PYTHONUNBUFFERED=1
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=dev-token
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_SECURE=false
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+    tty: true
+    depends_on:
+      - kaapi-db
+      - redis
+      - vault
+      - minio
+    networks:
+      - kaapi-network
+
+  celery:
+    # PAS DE SECTION 'build'. CE SERVICE UTILISE L'IMAGE EXISTANTE.
+    image: kaapi-app:latest
+    container_name: kaapi-celery
+    command: python -m celery -A app.core.celery worker --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@kaapi-db:5432/kaapi
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=dev-token
+    depends_on:
+      - api # S'assure que 'api' est prêt avant de démarrer
+      - kaapi-db
+      - redis
+      - vault
+    networks:
+      - kaapi-network
+
+  metrics:
+    # PAS DE SECTION 'build'. CE SERVICE UTILISE L'IMAGE EXISTANTE.
+    image: kaapi-app:latest
+    container_name: kaapi-metrics
+    command: python app/metrics_server.py
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: always
+    depends_on:
+      - api # S'assure que 'api' est prêt avant de démarrer
+      - kaapi-db
+      - redis
+      - vault
+    networks:
+      - kaapi-network
+
+  # --- LES SERVICES DE BASE RESTENT INCHANGÉS ---
+  kaapi-db:
+    image: postgres:15-alpine
+    container_name: kaapi-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=kaapi
+    ports:
+      - "5432"
+    networks:
+      - kaapi-network
+    # Pour le depends_on de celery et metrics, un healthcheck est une bonne pratique
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kaapi"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: kaapi-redis
+    ports:
+      - "6379"
+    networks:
+      - kaapi-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  vault:
+    image: hashicorp/vault:latest
+    container_name: kaapi-vault
+    ports:
+      - "8200"
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=dev-token
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - kaapi-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: kaapi-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - kaapi-network
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  kaapi-network:
+    name: kaapi-network  
+    driver: bridge

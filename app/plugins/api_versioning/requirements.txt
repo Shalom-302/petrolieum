@@ -1,0 +1,8 @@
+# API Versioning Plugin Dependencies
+semver>=3.0.1  # For semantic versioning utilities
+fastapi-versioning>=0.10.0  # FastAPI extension for API versioning
+pydantic>=2.4.2  # For data validation and settings management
+openapi-spec-validator>=0.6.0  # For validating OpenAPI specifications
+
+# Load generation script dependencies
+aiohttp>=3.8.5  # Asynchronous HTTP client

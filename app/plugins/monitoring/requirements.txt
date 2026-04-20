@@ -1,0 +1,13 @@
+# Monitoring Plugin Dependencies
+prometheus-client>=0.17.1  # Prometheus metrics instrumentation
+statsd>=4.0.1  # StatsD client for metrics
+psutil>=5.9.5  # For system resource metrics collection
+py-spy>=0.3.14  # For CPU profiling
+memray>=1.10.0  # For memory profiling
+opentelemetry-api>=1.20.0  # OpenTelemetry API
+opentelemetry-sdk>=1.20.0  # OpenTelemetry SDK
+opentelemetry-exporter-otlp>=1.20.0  # OpenTelemetry OTLP exporter
+
+# Load generation script dependencies
+asyncpg>=0.28.0  # Asynchronous PostgreSQL client
+aiohttp>=3.8.5  # Asynchronous HTTP client

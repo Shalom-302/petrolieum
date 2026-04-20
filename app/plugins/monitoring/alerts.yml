@@ -1,0 +1,95 @@
+# alerts.yml
+groups:
+- name: kaapi-alerts
+  rules:
+  - alert: HighRequestLatency
+    expr: kaapi_http_request_duration_seconds_bucket{le="0.5"} / kaapi_http_request_duration_seconds_count < 0.9
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High latency on {{ $labels.route }}"
+
+  - alert: DatabaseDown
+    expr: db_connected == 0
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Database connection lost"
+
+  - alert: HighErrorRate
+    expr: |
+      sum(rate(kaapi_http_requests_total{status=~"5.."}[5m])) 
+      / 
+      sum(rate(kaapi_http_requests_total[5m])) > 0.05
+    for: 5m
+    labels:
+      severity: critical
+      dashboard: http-metrics
+      panel: error-rate
+    annotations:
+      summary: "High error rate detected: {{ $value | humanizePercentage }}"
+      description: "Error rate exceeds 5% threshold for 5 minutes on route {{ $labels.endpoint }}"
+      
+  - alert: HighRequestLatency
+    expr: |
+      avg(rate(kaapi_http_request_processing_seconds_sum[5m])) 
+      / 
+      rate(kaapi_http_request_processing_seconds_count[5m]) > 1
+    for: 2m
+    labels:
+      severity: warning
+      dashboard: http-metrics
+      panel: latency-trends
+    annotations:
+      summary: "High average latency: {{ $value | humanizeDuration }}"
+      description: "Average request latency exceeds 1s on {{ $labels.endpoint }}"
+
+  - alert: P95LatencySpike
+    expr: |
+      histogram_quantile(0.95, 
+        sum by(le, endpoint) (
+          rate(kaapi_http_request_processing_seconds_bucket[5m])
+        )
+      ) > 2
+    for: 1m
+    labels:
+      severity: critical
+      dashboard: http-metrics
+      panel: latency-trends  
+    annotations:
+      summary: "P95 latency spike: {{ $value | humanizeDuration }}"
+      description: "95th percentile latency exceeds 2s on {{ $labels.endpoint }}"
+
+  # ====================================================================
+  # TEST ALERT - QUICK RESPONSE
+  # Uncomment this rule for testing and development environments.
+  # Comment it out or remove it in production environments.
+  # ====================================================================
+  - alert: TestAlertSimple
+    expr: up{job="kaapi-api"} < 2  # This condition is always true because 'up' is 0 or 1
+    for: 0m
+    labels:
+      severity: warning
+      test: true
+      dashboard: http-metrics
+    annotations:
+      summary: "Test alert: Simple condition always true"
+      description: "This alert triggers always because the value of 'up' is always less than 2"
+      runbook_url: "https://wiki.example.com/monitoring/test-alerts"
+
+  # ====================================================================
+  # TEST ALERT - HTTP ERRORS (Using correct metrics name)
+  # ====================================================================
+  - alert: Test4xxErrorRate
+    expr: sum(rate(kaapi_http_requests_total{status=~"4.."}[1m])) > 0
+    for: 0m
+    labels:
+      severity: warning
+      test: true
+      dashboard: http-metrics
+    annotations:
+      summary: "Test alert: 4xx errors detected"
+      description: "HTTP 4xx error rate is greater than 0 requests/sec (using correct metric name)"
+      runbook_url: "https://wiki.example.com/monitoring/test-alerts"

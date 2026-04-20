@@ -1,0 +1,67 @@
+vulnerability_scanning:
+  enabled: true
+  schedule:
+    minute: "30"
+    hour: "3"
+  trivy_path: "/usr/bin/trivy"
+  trivy:
+    targets: 
+      - "/app"
+      - "requirements.txt"
+  zap:
+    target_url: "http://localhost:8000"
+    api_key: "xxx"
+
+mfa:
+  enabled: true
+  protected_endpoints:
+    - /plugins/security/decrypt
+    - /admin
+    - /user/privileged
+  otp_validity_window: 2
+  max_attempts: 3
+
+session:
+  secret_key: "{{SESSION_SECRET}}"
+  expiration_hours: 1
+  token_rotation: 15 # minutes
+  max_concurrent_sessions: 3
+
+waf:
+  enabled: true
+  mode: block # [block|log|captcha]
+  threat_intel:
+    enabled: true
+    feeds:
+      - "https://feeds.dshield.org/block.txt"
+      - "https://rules.emergingthreats.net/blockrules/compromised-ips.txt"
+    update_interval: 3600  # seconds
+  rules:
+    - name: sql_injection
+      pattern: "([';]+(?:\\s*union|select|insert|delete|update|drop|alter))"
+      action: block
+    - name: xss
+      pattern: "(<script>|alert\\(|onerror=)"
+      action: block
+    - name: path_traversal
+      pattern: "(\\.\\./|\\\\)"
+      action: log
+
+deception:
+  enabled: true
+  traps:
+    - path: /internal/*
+      type: internal_api
+      response_delay: 500-1500ms
+    - path: /admin/*
+      type: admin_interface  
+    - path: /.*(\.git|\.env)
+      type: sensitive_files
+
+monitoring:
+  slack_enabled: true
+  slack_token: "xoxb-..."
+  email_alerts:
+    sender: "alerts@example.com"
+    recipients: ["soc@example.com"]
+    smtp_server: "smtp.example.com:587"

@@ -1,0 +1,71 @@
+services:
+  api:
+    build: .
+    container_name: kaapi-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@kaapi-db:5432/kaapi
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+      - PYTHONUNBUFFERED=1
+      
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+    tty: true
+    depends_on:
+      - kaapi-db
+      - redis
+      
+    networks:
+      - kaapi-network
+
+  kaapi-db:
+    image: postgres:15-alpine
+    container_name: kaapi-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=kaapi
+    ports:
+      - "5432:5432"
+    networks:
+      - kaapi-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: kaapi-db-redis
+    ports:
+      - "6380:6379"
+    networks:
+      - kaapi-network
+
+  celery:
+    build: .
+    container_name: kaapi-db-celery
+    command: python -m celery -A app.core.celery worker --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@kaapi-db:5432/kaapi
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+      
+    depends_on:
+      - kaapi-db
+      - redis
+    networks:
+      - kaapi-network
+
+
+
+volumes:
+  postgres_data:
+
+
+networks:
+  kaapi-network:
+    driver: bridge

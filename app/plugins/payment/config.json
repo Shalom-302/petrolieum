@@ -1,0 +1,129 @@
+{
+  "general": {
+    "test_mode": true,
+    "require_approval_threshold": 1000.0,
+    "default_approval_workflow": "standard_payment_approval"
+  },
+  "providers": {
+    "mpesa": {
+      "enabled": true,
+      "display_name": "M-Pesa",
+      "description": "Mobile money payment service by Safaricom",
+      "countries": ["Kenya", "Tanzania", "Mozambique"],
+      "currencies": ["KES", "TZS", "MZN"],
+      "timeout_seconds": 60,
+      "passkey_validation": true,
+      "stk_push_enabled": true,
+      "c2b_enabled": true,
+      "b2c_enabled": false
+    },
+    "flutterwave": {
+      "enabled": true,
+      "display_name": "Flutterwave",
+      "description": "Comprehensive payment solutions for Africa",
+      "countries": ["Nigeria", "Ghana", "Kenya", "South Africa", "Uganda", "Tanzania"],
+      "currencies": ["NGN", "GHS", "KES", "ZAR", "UGX", "TZS", "USD", "EUR"],
+      "timeout_seconds": 120,
+      "payment_methods": [
+        "card", "bank_transfer", "ussd", "mobile_money", "mpesa", "ghana_mobile_money"
+      ],
+      "webhook_verify_signature": true
+    },
+    "stripe": {
+      "enabled": false,
+      "display_name": "Stripe",
+      "description": "Global payment processor",
+      "countries": ["US", "EU", "UK", "CA", "AU"],
+      "currencies": ["USD", "EUR", "GBP", "CAD", "AUD"],
+      "timeout_seconds": 90,
+      "payment_methods": ["card", "apple_pay", "google_pay"],
+      "webhook_verify_signature": true
+    },
+    "paypal": {
+      "enabled": false,
+      "display_name": "PayPal",
+      "description": "Global online payment system",
+      "countries": ["US", "EU", "UK", "CA", "AU"],
+      "currencies": ["USD", "EUR", "GBP", "CAD", "AUD"],
+      "timeout_seconds": 90,
+      "payment_methods": ["paypal"],
+      "webhook_verify_signature": true
+    },
+    "paystack": {
+      "enabled": false,
+      "display_name": "Paystack",
+      "description": "Modern payment gateway for Africa",
+      "countries": ["Nigeria", "Ghana", "South Africa", "Kenya"],
+      "currencies": ["NGN", "GHS", "ZAR", "KES", "USD"],
+      "timeout_seconds": 90,
+      "payment_methods": ["card", "bank_transfer", "ussd"],
+      "webhook_verify_signature": true
+    }
+  },
+  "approval_workflows": {
+    "standard_payment_approval": {
+      "description": "Sequential approval from a list of approvers",
+      "min_approvers": 1,
+      "approval_timeout_hours": 48,
+      "allow_rejection": true,
+      "require_comments": false
+    },
+    "hierarchical_approval": {
+      "description": "Role-based approvals from different management levels",
+      "required_roles": ["supervisor", "manager", "finance_director"],
+      "approval_timeout_hours": 72,
+      "allow_rejection": true,
+      "require_comments": true
+    },
+    "amount_based_approval": {
+      "description": "Approval requirements based on payment amount",
+      "thresholds": [
+        {
+          "amount": 100,
+          "currency": "USD",
+          "required_roles": ["supervisor"]
+        },
+        {
+          "amount": 1000,
+          "currency": "USD",
+          "required_roles": ["supervisor", "manager"]
+        },
+        {
+          "amount": 10000,
+          "currency": "USD",
+          "required_roles": ["supervisor", "manager", "finance_director"]
+        }
+      ],
+      "approval_timeout_hours": 96,
+      "allow_rejection": true,
+      "require_comments": true
+    }
+  },
+  "notifications": {
+    "email": {
+      "enabled": true,
+      "include_payment_details": true,
+      "send_on_status_change": true,
+      "send_on_approval_required": true,
+      "send_on_approval_action": true
+    },
+    "in_app": {
+      "enabled": true,
+      "include_payment_details": true,
+      "display_toast": true,
+      "alert_sound": true
+    }
+  },
+  "security": {
+    "encrypt_payment_data": true,
+    "encrypt_provider_credentials": true,
+    "mask_card_numbers": true,
+    "mask_sensitive_fields": true
+  },
+  "monitoring": {
+    "log_payment_status_changes": true,
+    "alert_on_failed_payments": true,
+    "alert_on_expired_approvals": true,
+    "error_threshold_percent": 5
+  }
+}

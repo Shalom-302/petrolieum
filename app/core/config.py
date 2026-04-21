@@ -47,7 +47,13 @@ class Settings(BaseSettings):
     }
     
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000", "http://localhost:9000", "http://localhost:8501"]  # Explicitly allow localhost frontend
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "https://sevoil.kortexai.dev",      # <--- TON FRONT DE PROD
+        "https://petro-api.kortexai.dev",   # TON API (parfois utile pour Swagger)
+        "*"                                 # <--- AJOUTE ÇA POUR LE MEETING (SÉCURITÉ TOTALE)
+    ]
     CORS_METHODS: list[str] = ["*"]
     CORS_HEADERS: list[str] = ["*"]
     

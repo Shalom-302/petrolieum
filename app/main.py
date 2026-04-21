@@ -460,8 +460,7 @@ api_router.include_router(push_router, tags=["push"])
 # Business Routes
 api_router.include_router(test_site_router, prefix='/tests')
 api_router.include_router(veille_router.router, prefix="/veille", tags=["Veille"])
-api_router.include_router(petro.router, prefix="/petroleum", tags=["Petroleum Management"])
-
+api_router.include_router(petro.router, prefix="/petroleum")
 
 # Include the main API router in the application
 app.include_router(api_router)

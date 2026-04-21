@@ -7,12 +7,7 @@ from app.core.db import Base
 # --- 0. MULTI-TENANCY (ORGANISATIONS) ---
 
 class Organization(Base):
-    """
-    Entité centrale pour isoler les données (Multi-tenant).
-    Types: 'HUB' (Sevoil), 'STATION', 'MINIER', 'SOUTE'
-    """
     __tablename__ = "organizations"
-
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     org_type: Mapped[str] = mapped_column(String(50), nullable=False) 
@@ -21,9 +16,10 @@ class Organization(Base):
 
     # Relations
     tanks: Mapped[List["Tank"]] = relationship(back_populates="organization")
+    clients: Mapped[List["Client"]] = relationship(back_populates="organization")
 
     def __repr__(self) -> str:
-        return f"<Organization(id={self.id}, name='{self.name}', type='{self.org_type}')>"
+        return f"<Organization(id={self.id}, name='{self.name}')>"
 
 
 # --- 1. RÉFÉRENTIELS (PRODUITS & CLIENTS) ---
@@ -36,54 +32,50 @@ class Product(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now())
 
 class Client(Base):
-    """
-    Référentiel des clients. Chaque organisation gère ses propres clients.
-    """
     __tablename__ = "clients"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), nullable=False) # Isolation
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
     client_type: Mapped[str] = mapped_column(String(100))
     country: Mapped[str] = mapped_column(String(100), default="Ivory Coast")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now())
 
+    # Relations
+    organization: Mapped["Organization"] = relationship(back_populates="clients")
+    sales: Mapped[List["Sale"]] = relationship(back_populates="client")
+
+
 # --- 2. ASSETS LOGISTIQUES (STATIONS / DEPOTS) ---
 
 class Tank(Base):
-    """
-    Cuves de stockage appartenant à une organisation.
-    """
     __tablename__ = "tanks"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
-    name: Mapped[str] = mapped_column(String(100)) # ex: Cuve Gazole A
-    capacity: Mapped[float] = mapped_column(Float) # Capacité max
+    name: Mapped[str] = mapped_column(String(100))
+    capacity: Mapped[float] = mapped_column(Float)
     current_volume: Mapped[float] = mapped_column(Float, default=0.0)
 
+    # Relations
     organization: Mapped["Organization"] = relationship(back_populates="tanks")
     product: Mapped["Product"] = relationship()
     pumps: Mapped[List["Pump"]] = relationship(back_populates="tank")
 
 class Pump(Base):
-    """
-    Pompes de distribution rattachées à une cuve.
-    """
     __tablename__ = "pumps"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     tank_id: Mapped[int] = mapped_column(ForeignKey("tanks.id"), nullable=False)
-    name: Mapped[str] = mapped_column(String(100)) # ex: Pompe 1
-    last_index_value: Mapped[float] = mapped_column(Float, default=0.0) # Index compteur
+    name: Mapped[str] = mapped_column(String(100))
+    last_index_value: Mapped[float] = mapped_column(Float, default=0.0)
 
+    # Relations
     tank: Mapped["Tank"] = relationship(back_populates="pumps")
+
 
 # --- 3. CONFIGURATION DES PRIX ---
 
 class ProductPriceConfig(Base):
-    """
-    Structure des prix par produit et par organisation.
-    """
     __tablename__ = "product_price_configs"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), nullable=False)
@@ -97,17 +89,17 @@ class ProductPriceConfig(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
+    product: Mapped["Product"] = relationship()
+
+
 # --- 4. TRANSACTIONS (FLUX) ---
 
 class Purchase(Base):
-    """
-    Achat de produit (SIR vers SEV OIL, ou SEV OIL vers STATION).
-    """
     __tablename__ = "purchases"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
-    tank_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tanks.id")) # Dans quelle cuve on décharge ?
+    tank_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tanks.id"), nullable=True)
     
     volume: Mapped[float] = mapped_column(Float, nullable=False)
     unit_purchase_price: Mapped[float] = mapped_column(Float) 
@@ -117,29 +109,33 @@ class Purchase(Base):
     supplier: Mapped[str] = mapped_column(String(100), default="SIR")
     purchase_date: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now())
 
+    # Relations (CRITIQUE : Ajout de storage et tank)
+    product: Mapped["Product"] = relationship()
+    tank: Mapped[Optional["Tank"]] = relationship()
     taxes: Mapped[List["PurchaseTax"]] = relationship(back_populates="purchase", cascade="all, delete-orphan")
+    storage: Mapped[Optional["Storage"]] = relationship(back_populates="purchase", uselist=False, cascade="all, delete-orphan")
 
 class Sale(Base):
-    """
-    Vente de produit (Vers client ou via Pompe).
-    """
     __tablename__ = "sales"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), nullable=False)
     client_id: Mapped[int] = mapped_column(ForeignKey("clients.id"), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
-    pump_id: Mapped[Optional[int]] = mapped_column(ForeignKey("pumps.id")) # Si vente en station
+    pump_id: Mapped[Optional[int]] = mapped_column(ForeignKey("pumps.id"), nullable=True)
     
     volume: Mapped[float] = mapped_column(Float, nullable=False)
     unit_price: Mapped[float] = mapped_column(Float)
     total_amount: Mapped[float] = mapped_column(Float)
-    margin_boss_total: Mapped[float] = mapped_column(Float) # Les 50/L
+    margin_boss_total: Mapped[float] = mapped_column(Float) 
     
     status: Mapped[str] = mapped_column(String(50), default="delivered")
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now())
 
-    client: Mapped["Client"] = relationship()
+    # Relations
+    client: Mapped["Client"] = relationship(back_populates="sales")
     product: Mapped["Product"] = relationship()
+    pump: Mapped[Optional["Pump"]] = relationship()
+
 
 # --- 5. LOGISTIQUE & TAXES ---
 
@@ -149,6 +145,8 @@ class PurchaseTax(Base):
     purchase_id: Mapped[int] = mapped_column(ForeignKey("purchases.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     amount: Mapped[float] = mapped_column(Float, nullable=False)
+
+    # Relation
     purchase: Mapped["Purchase"] = relationship(back_populates="taxes")
 
 class Storage(Base):
@@ -158,22 +156,23 @@ class Storage(Base):
     location: Mapped[str] = mapped_column(String(100), default="GESTOCI")
     entry_date: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now())
     storage_cost: Mapped[float] = mapped_column(Float, default=0.0)
-    purchase: Mapped["Purchase"] = relationship()
+
+    # Relation
+    purchase: Mapped["Purchase"] = relationship(back_populates="storage")
 
 class StockMovement(Base):
-    """
-    Le journal de bord universel du stock. Isolé par organisation.
-    """
     __tablename__ = "stock_movements"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
-    tank_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tanks.id"))
+    tank_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tanks.id"), nullable=True)
     
     type: Mapped[str] = mapped_column(String(10), nullable=False) # "IN" / "OUT"
     volume: Mapped[float] = mapped_column(Float, nullable=False)
-    source: Mapped[str] = mapped_column(String(50), nullable=False) # "purchase", "sale", "pump_reading"
+    source: Mapped[str] = mapped_column(String(50), nullable=False) 
     source_id: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now())
 
+    # Relations
     product: Mapped["Product"] = relationship()
+    tank: Mapped[Optional["Tank"]] = relationship()

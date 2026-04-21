@@ -15,8 +15,7 @@ from app.models.petro import Sale, Purchase, Product,Client, ProductPriceConfig
 from app.plugins.advanced_auth.utils.security import require_role, get_current_active_user
 from app.plugins.advanced_auth.models.user import User
 
-router = APIRouter(prefix="/petroleum", tags=["Petroleum Management"])
-
+router = APIRouter(tags=["Petroleum Management"])
 # --- DÉPENDANCES DE RÔLES ---
 require_boss = Depends(require_role("boss"))
 require_employee = Depends(require_role("boss", "employee"))

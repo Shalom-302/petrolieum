@@ -122,7 +122,7 @@ async def list_purchases(
     current_user: User = Depends(get_current_active_user)
 ):
     """Liste les achats de l'organisation uniquement"""
-    return await crud_petro.get_purchases(db, current_user.organization_id)
+    return await crud_petro.get_purchases_by_org(db, current_user.organization_id)
 
 @router.patch("/purchases/{id}", response_model=schema.PurchaseRead, dependencies=[require_employee])
 async def update_purchase(
@@ -158,7 +158,7 @@ async def list_sales(
     current_user: User = Depends(get_current_active_user)
 ):
     """Chaque station ne voit que SES propres ventes"""
-    return await crud_petro.get_sales(db, current_user.organization_id)
+    return await crud_petro.get_sales_by_org(db, current_user.organization_id)
 
 @router.patch("/sales/{id}", response_model=schema.SaleRead, dependencies=[require_station])
 async def update_sale(

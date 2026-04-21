@@ -298,3 +298,32 @@ async def delete_pump(db: AsyncSession, pump_id: int) -> bool:
         await db.commit()
         return True
     return False
+
+
+# --- FIX DES ACHATS ---
+async def get_purchases_by_org(db: AsyncSession, org_id: int) -> List[Purchase]:
+    # On force le chargement des TAXES et du STORAGE
+    stmt = (
+        select(Purchase)
+        .where(Purchase.organization_id == org_id)
+        .options(
+            selectinload(Purchase.taxes),
+            selectinload(Purchase.storage)
+        )
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+# --- FIX DES VENTES ---
+async def get_sales_by_org(db: AsyncSession, org_id: int) -> List[Sale]:
+    # On force le chargement du CLIENT et du PRODUIT
+    stmt = (
+        select(Sale)
+        .where(Sale.organization_id == org_id)
+        .options(
+            selectinload(Sale.client),
+            selectinload(Sale.product)
+        )
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()

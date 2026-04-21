@@ -315,14 +315,28 @@ async def websocket_root_global(websocket: WebSocket, token: Optional[str] = Que
     await handle_global_websocket(websocket, token, user_id)
 
 # CORS Middleware
-origins = settings.CORS_ORIGINS
+# --- FIX CORS DYNAMIQUE ET SÉCURISÉ ---
+
+# On définit les domaines de confiance en dur pour être SÛR que la prod fonctionne
+production_origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://sevoil.kortexai.dev",
+    "https://petro-api.kortexai.dev",
+]
+
+# On fusionne avec ce qui vient des settings (ton config.py)
+all_origins = list(set(production_origins + settings.CORS_ORIGINS))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=settings.CORS_METHODS,
-    allow_headers=settings.CORS_HEADERS,
+    allow_origins=all_origins, # Utilise la liste fusionnée
+    allow_credentials=True,    # Indispensable pour tes tokens JWT
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],      # Ajouté pour permettre au Front de lire tous les headers
 )
+# ---------------------------------------
 
 # Advanced Security Middleware
 # app.add_middleware(

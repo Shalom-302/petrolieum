@@ -12,59 +12,52 @@ class PetroleumService:
     
     # --- HELPER : RÉCUPÉRER LA CONFIGURATION DE PRIX (Isolée par Org) ---
     @staticmethod
-    async def _get_active_config(db: AsyncSession, product_id: int):
+    async def _get_active_config(db: AsyncSession, product_id: int, org_id: int):
         # On cherche la config 400/225/50 spécifique à cette organisation
         stmt = select(ProductPriceConfig).where(
             ProductPriceConfig.product_id == product_id,
-            ProductPriceConfig.organization_id == 1,
+            ProductPriceConfig.organization_id == 1, # <--- Manigance : On utilise toujours la config du HUB (Org 1)
             ProductPriceConfig.is_active == True
         )
-        config = (await db.execute(stmt)).scalar_one_or_none()
+        result = await db.execute(stmt)
+        config = result.scalar_one_or_none()
+        
         if not config:
             raise HTTPException(
                 status_code=400, 
-                detail=f"Configuration PLEX non trouvée pour le produit {product_id} dans votre organisation."
+                detail=f"Configuration PLEX non trouvée pour le produit {product_id}."
             )
         return config
 
-    # --- 1. LOGIQUE ACHAT (Isolée par Org) ---
+    # --- 1. LOGIQUE ACHAT ---
     @staticmethod
     async def process_new_purchase(db: AsyncSession, purchase_in: schema_petro.PurchaseCreate, org_id: int):
-        """
-        SIR -> HUB (ou) HUB -> STATION. 
-        Calcule automatiquement les montants selon la config de l'organisation.
-        """
-        config = await PetroleumService._get_active_config(db, purchase_in.product_id)
+        # PASSAGE DE 3 ARGUMENTS : db, product_id, org_id
+        config = await PetroleumService._get_active_config(db, purchase_in.product_id, org_id)
         
         try:
-            # Application de la manigance (400 + 225)
-            price_sir = config.purchase_sir_unit 
-            price_tax = config.taxes_unit         
-            total = (price_sir + price_tax) * purchase_in.volume
+            total = (config.purchase_sir_unit + config.taxes_unit) * purchase_in.volume
 
-            # 1. Création de l'achat marqué par l'org_id
             new_purchase = Purchase(
                 organization_id=org_id,
                 product_id=purchase_in.product_id,
-                tank_id=purchase_in.tank_id, # Logistique cuve
+                tank_id=purchase_in.tank_id,
                 volume=purchase_in.volume,
-                unit_purchase_price=price_sir,
-                unit_taxes=price_tax,
+                unit_purchase_price=config.purchase_sir_unit,
+                unit_taxes=config.taxes_unit,
                 total_amount=total,
                 supplier=purchase_in.supplier
             )
             db.add(new_purchase)
             await db.flush()
 
-            # 2. Ajout automatique de la taxe de l'organisation
             db_tax = PurchaseTax(
                 purchase_id=new_purchase.id,
-                name=f"Taxes Plex - Org {org_id}",
-                amount=(price_tax * purchase_in.volume)
+                name=f"Taxes Plex",
+                amount=(config.taxes_unit * purchase_in.volume)
             )
             db.add(db_tax)
             
-            # 3. Mouvement de stock IN pour l'organisation
             await crud_petro.create_stock_movement(
                 db, 
                 product_id=new_purchase.product_id,
@@ -77,39 +70,35 @@ class PetroleumService:
             )
             
             await db.commit()
-
-            # Rechargement avec relations pour la réponse API (Fix Greenlet)
-            stmt = select(Purchase).where(Purchase.id == new_purchase.id).options(
-                selectinload(Purchase.taxes)
-            )
+            stmt = select(Purchase).where(Purchase.id == new_purchase.id).options(selectinload(Purchase.taxes))
             result = await db.execute(stmt)
             return result.scalar_one()
 
         except Exception as e:
             await db.rollback()
-            raise HTTPException(status_code=400, detail=f"Erreur achat org {org_id}: {str(e)}")
+            raise HTTPException(status_code=400, detail=str(e))
 
-    # --- 2. LOGIQUE VENTE (Isolée par Org + Marge 50F) ---
+    # --- 2. LOGIQUE VENTE ---
     @staticmethod
     async def process_new_sale(db: AsyncSession, sale_in: schema_petro.SaleCreate, org_id: int):
+        # PASSAGE DE 3 ARGUMENTS ICI AUSSI
         config = await PetroleumService._get_active_config(db, sale_in.product_id, org_id)
         
-        # Vérification du stock PROPRE à l'organisation
+        # Vérification du stock
         _, _, current_stock = await crud_petro.get_stock_detail_by_org(db, sale_in.product_id, org_id)
         
         if current_stock < sale_in.volume:
-            raise HTTPException(status_code=400, detail=f"Stock insuffisant dans votre organisation ({current_stock} L dispo)")
+            raise HTTPException(status_code=400, detail=f"Stock insuffisant ({current_stock} L dispo)")
         
         try:
             total_sale_amount = config.selling_price_unit * sale_in.volume
-            total_margin_boss = config.margin_boss_unit * sale_in.volume # Les 50F
+            total_margin_boss = config.margin_boss_unit * sale_in.volume
 
-            # 1. Création de la vente
             new_sale = Sale(
                 organization_id=org_id,
                 client_id=sale_in.client_id,
                 product_id=sale_in.product_id,
-                pump_id=sale_in.pump_id, # Logistique pompe
+                pump_id=sale_in.pump_id,
                 volume=sale_in.volume,
                 unit_price=config.selling_price_unit,
                 total_amount=total_sale_amount,
@@ -119,7 +108,6 @@ class PetroleumService:
             db.add(new_sale)
             await db.flush()
             
-            # 2. Mouvement de stock OUT pour l'organisation
             await crud_petro.create_stock_movement(
                 db,
                 product_id=new_sale.product_id,
@@ -131,16 +119,14 @@ class PetroleumService:
             )
             
             await db.commit()
-            
-            stmt = select(Sale).where(Sale.id == new_sale.id).options(
-                selectinload(Sale.client), selectinload(Sale.product)
-            )
+            stmt = select(Sale).where(Sale.id == new_sale.id).options(selectinload(Sale.client), selectinload(Sale.product))
             result = await db.execute(stmt)
             return result.scalar_one()
 
         except Exception as e:
             await db.rollback()
-            raise HTTPException(status_code=400, detail=f"Erreur vente: {str(e)}")
+            raise HTTPException(status_code=400, detail=str(e))
+    
     @staticmethod
     async def update_sale(db: AsyncSession, sale_id: int, org_id: int, obj_in: dict):
         """

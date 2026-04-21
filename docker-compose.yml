@@ -11,6 +11,8 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/kaapi
+      # AJOUT de l'URL ASYNC pour ton CRUD pétrole
+      ASYNC_DB_URL: postgresql+asyncpg://postgres:postgres@db:5432/kaapi
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: production
       PYTHONUNBUFFERED: 1
@@ -27,9 +29,9 @@ services:
       redis:
         condition: service_healthy
       vault:
-        condition: service_started
+        condition: service_healthy # MODIFIÉ : On attend que Vault soit vraiment prêt
       minio:
-        condition: service_started
+        condition: service_healthy # MODIFIÉ : On attend le healthcheck Minio
     networks:
       - dokploy-network
 
@@ -41,6 +43,7 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/kaapi
+      ASYNC_DB_URL: postgresql+asyncpg://postgres:postgres@db:5432/kaapi
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: production
       VAULT_ADDR: http://vault:8200
@@ -53,7 +56,7 @@ services:
       redis:
         condition: service_healthy
       vault:
-        condition: service_started
+        condition: service_healthy
     networks:
       - dokploy-network
 
@@ -103,10 +106,19 @@ services:
     environment:
       VAULT_DEV_ROOT_TOKEN_ID: dev-token
       VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+      # AJOUT : Autorise la persistance même en mode DEV si on utilise un volume
+      VAULT_ADDR: http://127.0.0.1:8200
     cap_add:
       - IPC_LOCK
+    volumes:
+      - vault_data:/vault/file # AJOUT : Pour que tes clés ne s'effacent pas au rebuild
     networks:
       - dokploy-network
+    healthcheck: # AJOUT : Pour que l'API n'essaie pas de lire les clés trop tôt
+      test: ["CMD", "vault", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   minio:
     image: minio/minio:latest
@@ -121,13 +133,14 @@ services:
       - dokploy-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
+      interval: 10s # Réduit pour plus de rapidité
+      timeout: 10s
       retries: 3
 
 volumes:
   postgres_data:
   minio_data:
+  vault_data: # AJOUT : Volume pour Vault
 
 networks:
   dokploy-network:

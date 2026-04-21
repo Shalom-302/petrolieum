@@ -14,10 +14,22 @@ services:
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: production
       PYTHONUNBUFFERED: 1
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: dev-token
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_SECURE: "false"
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      vault:
+        condition: service_started
+      minio:
+        condition: service_started
     networks:
       - dokploy-network
 
@@ -25,14 +37,35 @@ services:
     image: kaapi-app:latest
     restart: always
     command: python -m celery -A app.core.celery worker --loglevel=info
+    env_file:
+      - .env
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/kaapi
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: production
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: dev-token
     depends_on:
-      - api
-      - db
-      - redis
+      api:
+        condition: service_started
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      vault:
+        condition: service_started
+    networks:
+      - dokploy-network
+
+  metrics:
+    image: kaapi-app:latest
+    restart: always
+    command: python app/metrics_server.py
+    env_file:
+      - .env
+    depends_on:
+      api:
+        condition: service_started
     networks:
       - dokploy-network
 
@@ -47,15 +80,54 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     networks:
       - dokploy-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kaapi"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
     restart: always
     networks:
       - dokploy-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  vault:
+    image: hashicorp/vault:latest
+    restart: always
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: dev-token
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - dokploy-network
+
+  minio:
+    image: minio/minio:latest
+    restart: always
+    volumes:
+      - minio_data:/data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    networks:
+      - dokploy-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
 
 volumes:
   postgres_data:
+  minio_data:
 
 networks:
   dokploy-network:

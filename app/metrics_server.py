@@ -12,60 +12,46 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("metrics-server")
 
-# Create a FastAPI application dedicated to metrics
 app = FastAPI(title="Kaapi Metrics", docs_url=None, redoc_url=None)
-
-# Create a custom registry for metrics
 REGISTRY = CollectorRegistry()
 
-# Base metrics
-HTTP_REQUESTS = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint', 'status'], registry=REGISTRY)
-REQUEST_LATENCY = Summary('http_request_duration_seconds', 'HTTP request latency', registry=REGISTRY)
+# --- FIX : NOMS UNIQUES POUR ÉVITER LE DUPLICATED TIMESERIES ---
+# Base metrics (avec labels)
+HTTP_REQUESTS_LABELED = Counter('http_requests_labeled_total', 'Total HTTP requests with labels', ['method', 'endpoint', 'status'], registry=REGISTRY)
+REQUEST_LATENCY_SUMMARY = Summary('http_request_latency_seconds', 'HTTP request latency summary', registry=REGISTRY)
 
-# Server metrics
-REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', registry=REGISTRY)
-REQUEST_DURATION = Histogram('http_request_duration_seconds', 'HTTP request duration in seconds', registry=REGISTRY)
+# Server metrics (globaux)
+REQUEST_COUNT_GLOBAL = Counter('http_requests_global_total', 'Total global HTTP requests', registry=REGISTRY)
+REQUEST_DURATION_HIST = Histogram('http_request_duration_hist_seconds', 'HTTP request duration histogram', registry=REGISTRY)
 
 # System metrics
 DISK_FREE = Gauge('system_disk_free_bytes', 'Free disk space in bytes', registry=REGISTRY)
 
 @app.get("/metrics")
 async def metrics():
-    """Endpoint to expose Prometheus metrics."""
     try:
-        # Update system metrics
         update_system_metrics()
-        
-        # Generate Prometheus metrics
         return Response(content=generate_latest(REGISTRY), media_type=CONTENT_TYPE_LATEST)
     except Exception as e:
         logger.error(f"Error generating metrics: {str(e)}")
         return Response(content=f"# Error: {str(e)}", status_code=500)
 
 def update_system_metrics():
-    """Update system metrics."""
     try:
-        # We no longer update system metrics here
-        # since they are managed in main.py
-        
-        # Only the DISK_FREE metric is preserved since it is not duplicated
         disk = psutil.disk_usage('/')
         DISK_FREE.set(disk.free)
     except Exception as e:
         logger.error(f"Error updating system metrics: {str(e)}")
 
 async def periodic_metrics_update():
-    """Update system metrics periodically."""
     while True:
         update_system_metrics()
-        await asyncio.sleep(15)  # Update every 15 seconds
+        await asyncio.sleep(15)
 
 @app.on_event("startup")
 async def startup_event():
-    """Startup event to initialize background tasks."""
     asyncio.create_task(periodic_metrics_update())
     logger.info("Metrics server started")
 
 if __name__ == "__main__":
-    # Start the server on port 8001
     uvicorn.run(app, host="0.0.0.0", port=8001)

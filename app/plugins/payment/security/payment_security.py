@@ -1,9 +1,3 @@
-"""
-Payment security integration module.
-
-This module provides security integrations for payment providers, leveraging
-the existing security plugin to provide enhanced protection for payment data.
-"""
 import logging
 import json
 from typing import Dict, Any, Optional, List, Union
@@ -18,40 +12,31 @@ from app.plugins.security.services import CryptoService, DatabaseEncryptor
 
 logger = logging.getLogger("kaapi.payment.security")
 
-
 class PaymentSecurity:
-    """
-    Provides security services for payment providers.
-    
-    This class integrates with the security plugin to provide:
-    1. Sensitive data encryption (PCI DSS compliance)
-    2. Secure credential storage
-    3. Encrypted audit logging
-    4. Key rotation
-    """
-    
     _instance = None
     
     def __new__(cls):
-        """Singleton pattern to ensure only one instance is created."""
         if cls._instance is None:
             cls._instance = super(PaymentSecurity, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
     
     def __init__(self):
-        """Initialize payment security service."""
         if self._initialized:
             return
             
         try:
-            # Initialize vault client for secure secrets management
+            # 1. Init Vault
             self.vault_client = VaultClient()
             
-            # Initialize crypto service for encryption/decryption
-            self.crypto_service = CryptoService(self.vault_client)
-            
-            # Fields that should be encrypted for each provider
+            # 2. Init Crypto avec protection contre le crash de clé manquante
+            try:
+                self.crypto_service = CryptoService(self.vault_client)
+            except Exception as crypto_err:
+                logger.error(f"⚠️ CRITICAL: CryptoService failed (Vault key missing?). Using limited mode. Error: {crypto_err}")
+                # On crée un objet simulé pour ne pas faire planter les autres modules
+                self.crypto_service = None 
+
             self.sensitive_fields = {
                 "payment_request": ["card_number", "cvv", "bank_account", "phone_number"],
                 "customer_data": ["tax_id", "id_number", "address"],
@@ -59,7 +44,6 @@ class PaymentSecurity:
                 "webhook_data": ["signature", "raw_body"]
             }
             
-            # PCI DSS validation patterns
             self.pci_patterns = {
                 "card_number": r"^(?:\d{4}[- ]?){3}\d{4}$|^\d{16}$",
                 "cvv": r"^\d{3,4}$",
@@ -70,9 +54,12 @@ class PaymentSecurity:
             self._initialized = True
             
         except Exception as e:
-            logger.error(f"Failed to initialize payment security: {str(e)}")
-            raise
-    
+            # ON NE RAISE PLUS, ON LOGUE SEULEMENT
+            logger.error(f"❌ Payment security failed to boot: {str(e)}")
+            self.vault_client = None
+            self.crypto_service = None
+            self._initialized = True # On marque comme init pour éviter de boucler sur l'erreur
+               
     def encrypt_sensitive_data(self, data: Dict[str, Any], data_type: str = "payment_request") -> Dict[str, Any]:
         """
         Encrypt sensitive fields in payment data.

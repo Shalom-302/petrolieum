@@ -7,8 +7,10 @@ from app.models.petro import (
 )
 from app.schemas.petro import (
     ProductCreate, ClientCreate, PurchaseCreate, SaleCreate, 
-    PriceConfigCreate, StorageRead, PurchaseTaxCreate
+    PriceConfigCreate, StorageRead, PurchaseTaxCreate, TankBase, PumpBase
 )
+from sqlalchemy.orm import selectinload
+from typing import Tuple 
 
 # --- 0. HELPERS GÉNÉRIQUES SÉCURISÉS (LE VERROU) ---
 
@@ -191,15 +193,29 @@ async def create_stock_movement(
     # Note: On laisse le Service faire le commit final pour l'atomicité
     return db_obj
 
-async def get_stock_detail_by_org(db: AsyncSession, product_id: int, org_id: int):
+from typing import Tuple # Ajoute cet import en haut
+
+async def get_stock_detail_by_org(
+    db: AsyncSession, 
+    product_id: int, 
+    org_id: int
+) -> Tuple[float, float, float]: # <--- ON DIT EXPLICITEMENT QUE C'EST UN TUPLE DE 3 CHIFFRES
     """Calcule In, Out et Current pour une Org précise"""
     base_filter = and_(StockMovement.product_id == product_id, StockMovement.organization_id == org_id)
     
-    res_in = await db.execute(select(func.sum(StockMovement.volume)).where(and_(base_filter, StockMovement.type == "IN")))
-    total_in = res_in.scalar() or 0.0
+    # Récupération IN
+    res_in = await db.execute(
+        select(func.sum(StockMovement.volume))
+        .where(and_(base_filter, StockMovement.type == "IN"))
+    )
+    total_in = float(res_in.scalar() or 0.0) # On force le type float
     
-    res_out = await db.execute(select(func.sum(StockMovement.volume)).where(and_(base_filter, StockMovement.type == "OUT")))
-    total_out = res_out.scalar() or 0.0
+    # Récupération OUT
+    res_out = await db.execute(
+        select(func.sum(StockMovement.volume))
+        .where(and_(base_filter, StockMovement.type == "OUT"))
+    )
+    total_out = float(res_out.scalar() or 0.0) # On force le type float
     
     return total_in, total_out, (total_in - total_out)
 
@@ -229,3 +245,56 @@ async def update_tax(db: AsyncSession, tax_id: int, org_id: int, obj_in: Dict[st
 async def delete_tax(db: AsyncSession, tax_id: int, org_id: int) -> bool:
     """Supprimer une taxe spécifique"""
     return await delete_item_secure(db, PurchaseTax, tax_id, org_id)
+
+
+# --- 9. CRUD CUVES (TANKS) ---
+
+async def create_tank(db: AsyncSession, obj_in: TankBase, org_id: int) -> Tank:
+    db_obj = Tank(**obj_in.model_dump(), organization_id=org_id)
+    db.add(db_obj)
+    await db.commit()
+    await db.refresh(db_obj)
+    return db_obj
+
+async def get_tanks(db: AsyncSession, org_id: int) -> List[Tank]:
+    """Récupère les cuves de l'org avec leurs pompes rattachées"""
+    stmt = select(Tank).where(Tank.organization_id == org_id).options(selectinload(Tank.pumps))
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+async def update_tank(db: AsyncSession, tank_id: int, org_id: int, obj_in: dict) -> Optional[Tank]:
+    return await update_item_secure(db, Tank, tank_id, org_id, obj_in)
+
+async def delete_tank(db: AsyncSession, tank_id: int, org_id: int) -> bool:
+    return await delete_item_secure(db, Tank, tank_id, org_id)
+
+
+# --- 10. CRUD POMPES (PUMPS) ---
+
+async def create_pump(db: AsyncSession, obj_in: PumpBase) -> Pump:
+    db_obj = Pump(**obj_in.model_dump())
+    db.add(db_obj)
+    await db.commit()
+    await db.refresh(db_obj)
+    return db_obj
+
+async def get_pumps_by_org(db: AsyncSession, org_id: int) -> List[Pump]:
+    """Récupère toutes les pompes d'une organisation via ses cuves"""
+    stmt = select(Pump).join(Tank).where(Tank.organization_id == org_id)
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+async def update_pump(db: AsyncSession, pump_id: int, obj_in: dict) -> Optional[Pump]:
+    # Ici l'update est simple car l'ID est unique
+    stmt = update(Pump).where(Pump.id == pump_id).values(**obj_in)
+    await db.execute(stmt)
+    await db.commit()
+    return await db.get(Pump, pump_id)
+
+async def delete_pump(db: AsyncSession, pump_id: int) -> bool:
+    db_obj = await db.get(Pump, pump_id)
+    if db_obj:
+        await db.delete(db_obj)
+        await db.commit()
+        return True
+    return False

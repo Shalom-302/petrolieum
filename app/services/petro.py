@@ -12,11 +12,11 @@ class PetroleumService:
     
     # --- HELPER : RÉCUPÉRER LA CONFIGURATION DE PRIX (Isolée par Org) ---
     @staticmethod
-    async def _get_active_config(db: AsyncSession, product_id: int, org_id: int):
+    async def _get_active_config(db: AsyncSession, product_id: int):
         # On cherche la config 400/225/50 spécifique à cette organisation
         stmt = select(ProductPriceConfig).where(
             ProductPriceConfig.product_id == product_id,
-            ProductPriceConfig.organization_id == org_id,
+            ProductPriceConfig.organization_id == 1,
             ProductPriceConfig.is_active == True
         )
         config = (await db.execute(stmt)).scalar_one_or_none()
@@ -34,7 +34,7 @@ class PetroleumService:
         SIR -> HUB (ou) HUB -> STATION. 
         Calcule automatiquement les montants selon la config de l'organisation.
         """
-        config = await PetroleumService._get_active_config(db, purchase_in.product_id, org_id)
+        config = await PetroleumService._get_active_config(db, purchase_in.product_id)
         
         try:
             # Application de la manigance (400 + 225)

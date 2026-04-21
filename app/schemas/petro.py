@@ -163,3 +163,4 @@ class DashboardStats(PetroBase):
     total_taxes_paid: float
     estimated_margin: float
     stock_levels: List[StockStatus]
+

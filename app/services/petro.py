@@ -70,7 +70,14 @@ class PetroleumService:
             )
             
             await db.commit()
-            stmt = select(Purchase).where(Purchase.id == new_purchase.id).options(selectinload(Purchase.taxes))
+            stmt = (
+                select(Purchase)
+                .where(Purchase.id == new_purchase.id)
+                .options(
+                    selectinload(Purchase.taxes),
+                    selectinload(Purchase.storage) # <--- C'est cette ligne qui manquait !
+                )
+            )
             result = await db.execute(stmt)
             return result.scalar_one()
 
